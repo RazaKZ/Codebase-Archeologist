@@ -69,7 +69,7 @@ export default function GraphVisualization() {
             return '#6366f1'
           }}
         />
-        <Background variant="dots" gap={16} size={1} />
+        <Background gap={16} size={1} />
       </ReactFlow>
     </div>
   )
