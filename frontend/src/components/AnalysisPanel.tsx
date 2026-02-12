@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Play, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Play, Loader2, XCircle } from 'lucide-react'
 import { useAnalysisStore } from '../store/analysisStore'
 import { startAnalysis, connectWebSocket } from '../services/api'
 
