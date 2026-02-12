@@ -27,12 +27,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware - handle both string and list formats
+cors_origins = settings.CORS_ORIGINS
+if isinstance(cors_origins, str):
+    cors_origins = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
@@ -56,6 +60,13 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+@app.get("/debug/cors")
+async def debug_cors():
+    return {
+        "cors_origins": settings.CORS_ORIGINS,
+        "cors_origins_type": type(settings.CORS_ORIGINS).__name__
+    }
 
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
