@@ -17,10 +17,12 @@ class Settings(BaseSettings):
     # For production, set CORS_ORIGINS environment variable in Railway
     # Example: CORS_ORIGINS=https://codebase-archeologist.vercel.app,http://localhost:5173
     CORS_ORIGINS: Union[str, List[str]] = [
+        "https://codebase-archeologist.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173"
     ]
+    
     
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
