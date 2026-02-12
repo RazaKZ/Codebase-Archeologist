@@ -63,3 +63,12 @@ export async function analyzeImpact(projectId: number, targetNode: string) {
   return response.data
 }
 
+export async function sendChatMessage(message: string, projectId?: number, analysisResults?: any) {
+  const response = await axios.post(`${API_BASE}/api/chat`, {
+    message,
+    project_id: projectId,
+    analysis_results: analysisResults
+  })
+  return response.data
+}
+

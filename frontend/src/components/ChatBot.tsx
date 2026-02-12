@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Minimize2, Maximize2, X } from 'lucide-react'
 import { useAnalysisStore } from '../store/analysisStore'
+import { sendChatMessage } from '../services/api'
 
 interface Message {
   id: string
@@ -48,19 +49,11 @@ export default function ChatBot() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: input,
-          project_id: currentProject?.id,
-          analysis_results: analysisResults
-        })
-      })
-
-      const data = await response.json()
+      const data = await sendChatMessage(
+        userMessage.content,
+        currentProject?.id,
+        analysisResults
+      )
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

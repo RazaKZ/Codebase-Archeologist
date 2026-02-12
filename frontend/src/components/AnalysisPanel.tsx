@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Play, Loader2, XCircle } from 'lucide-react'
 import { useAnalysisStore } from '../store/analysisStore'
-import { startAnalysis, connectWebSocket } from '../services/api'
+import { startAnalysis, connectWebSocket, getAnalysisStatus, getAnalysisResults } from '../services/api'
 
 // Helper function to transform graph data for React Flow
 function transformGraphData(graphData: any) {
@@ -83,16 +83,14 @@ export default function AnalysisPanel() {
       // Poll for results
       const checkStatus = setInterval(async () => {
         try {
-          const statusResponse = await fetch(`http://localhost:8000/api/analysis/status/${response.project_id}`)
-          const status = await statusResponse.json()
+          const status = await getAnalysisStatus(response.project_id)
           
           if (status.status === 'completed') {
             clearInterval(checkStatus)
             setLoading(false)
             
             // Fetch final results
-            const resultsResponse = await fetch(`http://localhost:8000/api/analysis/results/${response.project_id}`)
-            const results = await resultsResponse.json()
+            const results = await getAnalysisResults(response.project_id)
             setAnalysisResults(results.results)
             
             // Extract and set graph nodes/edges from dependency_mapper results
