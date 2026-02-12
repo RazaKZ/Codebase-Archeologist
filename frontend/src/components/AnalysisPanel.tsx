@@ -53,26 +53,36 @@ export default function AnalysisPanel() {
 
     try {
       const clientId = `client_${Date.now()}`
+      console.log('🚀 Starting analysis for:', repoUrl)
+      console.log('🆔 Client ID:', clientId)
+      
       const response = await startAnalysis(repoUrl, clientId)
+      console.log('📦 Analysis start response:', response)
       
       if (!response.project_id) {
         throw new Error('Failed to get project ID from server')
       }
       
+      console.log('✅ Project created with ID:', response.project_id)
       setCurrentProject({ id: response.project_id, repo_url: repoUrl })
       
       // Connect WebSocket for real-time updates
+      console.log('🔌 Connecting WebSocket with clientId:', clientId)
       connectWebSocket(clientId, (data) => {
+        console.log('📨 WebSocket message received:', data)
         if (data.type === 'progress') {
+          console.log(`📊 Progress: ${data.agent} - ${data.progress}% - ${data.message}`)
           setProgress({
             agent: data.agent,
             progress: data.progress,
             message: data.message
           })
         } else if (data.type === 'result') {
+          console.log(`✅ Result received from ${data.agent}:`, data.data)
           if (data.agent === 'dependency_mapper') {
             // Transform graph data for React Flow
             const { nodes, edges } = transformGraphData(data.data)
+            console.log(`📈 Setting graph: ${nodes.length} nodes, ${edges.length} edges`)
             setNodes(nodes)
             setEdges(edges)
           }
@@ -96,37 +106,48 @@ export default function AnalysisPanel() {
         try {
           const status = await getAnalysisStatus(response.project_id)
           retryCount = 0 // Reset retry count on success
+          console.log('📊 Status check:', status)
           
           if (status.status === 'completed') {
+            console.log('✅ Analysis completed!')
             if (statusCheckInterval) clearInterval(statusCheckInterval)
             setLoading(false)
             
             // Fetch final results
+            console.log('📥 Fetching final results...')
             const results = await getAnalysisResults(response.project_id)
+            console.log('📦 Final results:', results)
             setAnalysisResults(results.results)
             
             // Extract and set graph nodes/edges from dependency_mapper results
             if (results.results?.dependency_mapper) {
               const { nodes, edges } = transformGraphData(results.results.dependency_mapper)
+              console.log(`📈 Setting final graph: ${nodes.length} nodes, ${edges.length} edges`)
               setNodes(nodes)
               setEdges(edges)
+            } else {
+              console.warn('⚠️ No dependency_mapper results found')
             }
           } else if (status.status === 'failed') {
+            console.error('❌ Analysis failed')
             if (statusCheckInterval) clearInterval(statusCheckInterval)
             setLoading(false)
             setError('Analysis failed')
+          } else {
+            console.log(`⏳ Analysis status: ${status.status}`)
           }
         } catch (err: any) {
           // Handle 404 - project might not exist yet or was deleted
           if (err.response?.status === 404) {
             retryCount++
+            console.warn(`⚠️ Project not found (404), retry ${retryCount}/${maxRetries}`)
             if (retryCount >= maxRetries) {
               if (statusCheckInterval) clearInterval(statusCheckInterval)
               setLoading(false)
               setError('Project not found. Please try starting a new analysis.')
             }
           } else {
-            console.error('Status check error:', err)
+            console.error('❌ Status check error:', err)
           }
         }
       }, 2000)

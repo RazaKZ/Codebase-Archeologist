@@ -8,12 +8,12 @@ import ReactFlow, {
   Connection,
   addEdge,
 } from 'reactflow'
-import { Network } from 'lucide-react'
+import { Network, Loader2 } from 'lucide-react'
 import 'reactflow/dist/style.css'
 import { useAnalysisStore } from '../store/analysisStore'
 
 export default function GraphVisualization() {
-  const { nodes: storeNodes, edges: storeEdges } = useAnalysisStore()
+  const { nodes: storeNodes, edges: storeEdges, progress } = useAnalysisStore()
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(storeEdges)
 
@@ -33,10 +33,36 @@ export default function GraphVisualization() {
         <div className="flex items-center justify-center h-full text-slate-400">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-slate-700/50 rounded-full flex items-center justify-center">
-              <Network className="w-8 h-8 text-slate-500" />
+              {progress ? (
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              ) : (
+                <Network className="w-8 h-8 text-slate-500" />
+              )}
             </div>
-            <p className="text-lg font-semibold mb-2">No graph data available</p>
-            <p className="text-sm text-slate-500">Waiting for analysis to complete...</p>
+            {progress ? (
+              <>
+                <p className="text-lg font-semibold mb-2 text-white">
+                  {progress.agent ? `Analyzing: ${progress.agent}` : 'Analysis in progress...'}
+                </p>
+                <p className="text-sm text-slate-400 mb-2">{progress.message || 'Processing repository...'}</p>
+                {progress.progress > 0 && (
+                  <div className="w-64 mx-auto mt-4">
+                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 transition-all duration-300"
+                        style={{ width: `${progress.progress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 text-center">{progress.progress}%</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-semibold mb-2">No graph data available</p>
+                <p className="text-sm text-slate-500">Start an analysis to see the dependency graph</p>
+              </>
+            )}
           </div>
         </div>
       </div>
