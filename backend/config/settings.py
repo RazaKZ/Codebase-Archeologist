@@ -19,8 +19,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "https://codebase-archeologist.vercel.app"
+        "http://127.0.0.1:5173"
     ]
     
     @field_validator('CORS_ORIGINS', mode='before')
