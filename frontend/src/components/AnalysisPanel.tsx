@@ -55,6 +55,10 @@ export default function AnalysisPanel() {
       const clientId = `client_${Date.now()}`
       const response = await startAnalysis(repoUrl, clientId)
       
+      if (!response.project_id) {
+        throw new Error('Failed to get project ID from server')
+      }
+      
       setCurrentProject({ id: response.project_id, repo_url: repoUrl })
       
       // Connect WebSocket for real-time updates
@@ -80,13 +84,21 @@ export default function AnalysisPanel() {
         }
       })
 
+      // Wait a bit before starting to poll (give backend time to create project)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       // Poll for results
-      const checkStatus = setInterval(async () => {
+      let statusCheckInterval: NodeJS.Timeout | null = null
+      let retryCount = 0
+      const maxRetries = 5 // Stop after 5 consecutive 404s
+      
+      statusCheckInterval = setInterval(async () => {
         try {
           const status = await getAnalysisStatus(response.project_id)
+          retryCount = 0 // Reset retry count on success
           
           if (status.status === 'completed') {
-            clearInterval(checkStatus)
+            if (statusCheckInterval) clearInterval(statusCheckInterval)
             setLoading(false)
             
             // Fetch final results
@@ -100,16 +112,33 @@ export default function AnalysisPanel() {
               setEdges(edges)
             }
           } else if (status.status === 'failed') {
-            clearInterval(checkStatus)
+            if (statusCheckInterval) clearInterval(statusCheckInterval)
             setLoading(false)
             setError('Analysis failed')
           }
-        } catch (err) {
-          console.error('Status check error:', err)
+        } catch (err: any) {
+          // Handle 404 - project might not exist yet or was deleted
+          if (err.response?.status === 404) {
+            retryCount++
+            if (retryCount >= maxRetries) {
+              if (statusCheckInterval) clearInterval(statusCheckInterval)
+              setLoading(false)
+              setError('Project not found. Please try starting a new analysis.')
+            }
+          } else {
+            console.error('Status check error:', err)
+          }
         }
       }, 2000)
 
-      setTimeout(() => clearInterval(checkStatus), 300000) // 5 min timeout
+      // Cleanup after 5 minutes
+      setTimeout(() => {
+        if (statusCheckInterval) clearInterval(statusCheckInterval)
+        if (loading) {
+          setLoading(false)
+          setError('Analysis timeout. Please try again.')
+        }
+      }, 300000) // 5 min timeout
       
     } catch (err: any) {
       setError(err.message || 'Failed to start analysis')

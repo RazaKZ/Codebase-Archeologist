@@ -6,7 +6,7 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 sqlalchemy==2.0.23
 alembic==1.12.1
-# psycopg2-binary==2.9.9  # Optional - only needed for PostgreSQL. For SQLite, skip this.
+psycopg2-binary==2.9.9  # Required for PostgreSQL on Railway
 # langgraph==0.0.20  # Optional - using custom orchestrator
 # langchain==0.1.0  # Optional
 # langchain-google-genai==0.0.6  # Optional
